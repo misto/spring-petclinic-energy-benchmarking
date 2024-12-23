@@ -2,18 +2,18 @@
 
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-APP_HOME="/Users/misto/repos/spring-petclinic-rest"
+APP_HOME="/home/misto/repos/spring-petclinic-rest"
 
-JMETER_CONFIG="/Users/misto/repos/spring-petclinic-energy-benchmarking/jmeter-petclinic-server.jmx"
+JMETER_CONFIG="/home/misto/repos/spring-petclinic-energy-benchmarking/jmeter-petclinic-server.jmx"
 
-JOULARJX_CONFIG="/Users/misto/repos/spring-petclinic-energy-benchmarking/config.properties"
+JOULARJX_CONFIG="/home/misto/repos/spring-petclinic-energy-benchmarking/config.properties"
 
-BENCHMARK_DATA="/Users/misto/repos/spring-petclinic-energy-benchmarking/benchmark-ddl-and-data.sql"
+BENCHMARK_DATA="/home/misto/repos/spring-petclinic-energy-benchmarking/benchmark-ddl-and-data.sql"
 
 APP_RUN_IDENTIFIER="$(date +%Y-%m-%d_%H-%M-%S)"
-OUTPUT_FOLDER="/Users/misto/repos/spring-petclinic-energy-benchmarking/out/$APP_RUN_IDENTIFIER"
+OUTPUT_FOLDER="/home/misto/repos/spring-petclinic-energy-benchmarking/out/$APP_RUN_IDENTIFIER"
 
-JAVA_OPTS="-javaagent:/Users/misto/repos/joularjx/target/joularjx-3.0.0.jar -Djoularjx.config=$JOULARJX_CONFIG -Dspring.sql.init.mode=never -Dspring.profiles.active=mysql,jpa"
+JAVA_OPTS="-javaagent:/home/misto/repos/joularjx/target/joularjx-3.0.1.jar -Djoularjx.config=$JOULARJX_CONFIG -Dspring.sql.init.mode=never -Dspring.profiles.active=mysql,jpa -Dserver.servlet.context-path=/ -Dspring.datasource.username=root -Dspring.datasource.password=petclinic"
 APP_PORT="9966"
 APP_BASE_URL="localhost:$APP_PORT"
 
@@ -360,7 +360,7 @@ create_output_folders
 
 print_app_info
 
-switch_application_branch || { exit 1; }
+# switch_application_branch || { exit 1; }
 
 change_spring_boot_version || { exit 1; }
 
