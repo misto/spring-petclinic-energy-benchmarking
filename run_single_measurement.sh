@@ -62,6 +62,11 @@ if [ -z "$jvm_version" ]; then
   exit 1
 fi
 
+if [ -z "$java_version" ]; then
+  echo "ERROR: Java version (for compilation) is required."
+  exit 1
+fi
+
 create_output_folders() {
   mkdir -p "$OUTPUT_FOLDER/log"
 }
@@ -94,15 +99,6 @@ change_spring_boot_version() {
   eval "cd $APP_HOME; $change_spring_boot_version_command"
 }
 
-change_java_version() {
-  echo "+================================+"
-  echo "| Changing Java Version"
-  echo "+================================+"
-  change_java_version_command="$APP_HOME/mvnw -f $APP_HOME/pom.xml versions:set-property -Dproperty=maven.compiler.release -DnewVersion=$java_version -DgenerateBackupPoms=false"
-  echo "$change_java_version_command"
-  eval "cd $APP_HOME; $change_java_version_command"
-}
-
 change_jvm_version() {
   echo "+================================+"
   echo "| Changing JVM Version"
@@ -127,7 +123,7 @@ build_application() {
   echo "+================================+"
   build_output_file="$OUTPUT_FOLDER/log/$APP_RUN_IDENTIFIER-build.log"
 
-  BUILD_CMD="$APP_HOME/mvnw -f $APP_HOME/pom.xml clean package -Dmaven.test.skip"
+  BUILD_CMD="$APP_HOME/mvnw -f $APP_HOME/pom.xml clean package -Dmaven.test.skip -Dmaven.compiler.release=$java_version"
   
   app_build_command="$BUILD_CMD > $build_output_file 2>&1"
   echo "$app_build_command"
@@ -144,6 +140,7 @@ print_app_info() {
   echo "| Configuration Properties"
   echo "+================================+"
   echo "JVM: $jvm_version"
+  echo "Java: $java_version"
   echo "Spring Boot: $spring_boot_version"
   echo "Webserver: $webserver"
   echo "App: $APP_HOME"
@@ -363,10 +360,6 @@ print_app_info
 # switch_application_branch || { exit 1; }
 
 change_spring_boot_version || { exit 1; }
-
-if [ -n "$java_version" ]; then
-  change_java_version || { exit 1; }
-fi
 
 change_jvm_version || { exit 1; }
 
