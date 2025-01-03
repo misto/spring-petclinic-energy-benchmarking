@@ -1,0 +1,661 @@
+diff --git a/pom.xml b/pom.xml
+index 49caa68..b6c708c 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -13,21 +13,22 @@
+     <parent>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-parent</artifactId>
+-        <version>3.3.5</version>
++        <version>2.7.18</version>
+         <relativePath/> <!-- lookup parent from Maven repository -->
+     </parent>
+ 
+     <properties>
++        <maven.compiler.release>8</maven.compiler.release>
+         <!-- Third-party libraries -->
+         <spring-data-jdbc.version>1.2.1.RELEASE</spring-data-jdbc.version>
+-        <springdoc-openapi-ui.version>2.6.0</springdoc-openapi-ui.version>
++        <springdoc-openapi-ui.version>1.6.11</springdoc-openapi-ui.version>
+         <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
+         <mapstruct.version>1.6.2</mapstruct.version>
+         <jaxb-api.version>2.3.1</jaxb-api.version>
+ 
+         <!-- Maven plugins -->
+         <jacoco.version>0.8.12</jacoco.version>
+-        <openapi-generator-maven-plugin.version>7.9.0</openapi-generator-maven-plugin.version>
++        <openapi-generator-maven-plugin.version>6.3.0</openapi-generator-maven-plugin.version>
+         <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
+ 
+         <!-- Docker -->
+@@ -123,7 +124,7 @@
+         </dependency>
+         <dependency>
+             <groupId>org.springdoc</groupId>
+-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
++            <artifactId>springdoc-openapi-ui</artifactId>
+             <version>${springdoc-openapi-ui.version}</version>
+         </dependency>
+ 
+@@ -176,7 +177,6 @@
+                             <additionalProperties>
+                                 <encoding.source>${project.build.sourceEncoding}</encoding.source>
+                                 <encoding.reporting>${project.reporting.outputEncoding}</encoding.reporting>
+-                                <java.release>${maven.compiler.release}</java.release>
+                             </additionalProperties>
+                         </configuration>
+                     </execution>
+@@ -283,12 +283,12 @@
+                                 <!-- Activating Java 8 features -->
+                                 <performBeanValidation>true</performBeanValidation>
+                                 <dateLibrary>java8</dateLibrary>
+-                                <useSpringBoot3>true</useSpringBoot3>
++                                <useSpringBoot3>false</useSpringBoot3>
+                                 <openApiNullable>false</openApiNullable>
+                                 <!-- override the default library to jersey2 -->
+                                 <serializationLibrary>jackson</serializationLibrary>
+                                 <!-- switch documentation provider to springdoc -->
+-                                <documentationProvider>springdoc</documentationProvider>
++                                <documentationProvider>none</documentationProvider>
+                             </configOptions>
+                         </configuration>
+                     </execution>
+@@ -318,6 +318,8 @@
+                 <artifactId>maven-compiler-plugin</artifactId>
+                 <version>${maven-compiler-plugin.version}</version>
+                 <configuration>
++                    <source>${java.version}</source>
++                    <target>${java.version}</target>
+                     <annotationProcessorPaths>
+                         <path>
+                             <groupId>org.mapstruct</groupId>
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/BaseEntity.java b/src/main/java/org/springframework/samples/petclinic/model/BaseEntity.java
+index 80bf755..f5fbe67 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/BaseEntity.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/BaseEntity.java
+@@ -15,10 +15,10 @@
+  */
+ package org.springframework.samples.petclinic.model;
+ 
+-import jakarta.persistence.GeneratedValue;
+-import jakarta.persistence.GenerationType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.MappedSuperclass;
++import javax.persistence.GeneratedValue;
++import javax.persistence.GenerationType;
++import javax.persistence.Id;
++import javax.persistence.MappedSuperclass;
+ 
+ import com.fasterxml.jackson.annotation.JsonIgnore;
+ 
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/NamedEntity.java b/src/main/java/org/springframework/samples/petclinic/model/NamedEntity.java
+index 0ae1953..f97dd52 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/NamedEntity.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/NamedEntity.java
+@@ -15,10 +15,10 @@
+  */
+ package org.springframework.samples.petclinic.model;
+ 
+-import jakarta.persistence.Column;
+-import jakarta.persistence.MappedSuperclass;
++import javax.persistence.Column;
++import javax.persistence.MappedSuperclass;
+ 
+-import jakarta.validation.constraints.NotEmpty;
++import javax.validation.constraints.NotEmpty;
+ 
+ 
+ /**
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/Owner.java b/src/main/java/org/springframework/samples/petclinic/model/Owner.java
+index 8cf3a6d..403f06c 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/Owner.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/Owner.java
+@@ -19,9 +19,9 @@ import org.springframework.beans.support.MutableSortDefinition;
+ import org.springframework.beans.support.PropertyComparator;
+ import org.springframework.core.style.ToStringCreator;
+ 
+-import jakarta.persistence.*;
+-import jakarta.validation.constraints.Digits;
+-import jakarta.validation.constraints.NotEmpty;
++import javax.persistence.*;
++import javax.validation.constraints.Digits;
++import javax.validation.constraints.NotEmpty;
+ import java.util.*;
+ 
+ 
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/Person.java b/src/main/java/org/springframework/samples/petclinic/model/Person.java
+index 6257f2e..a0da6f6 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/Person.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/Person.java
+@@ -15,10 +15,10 @@
+  */
+ package org.springframework.samples.petclinic.model;
+ 
+-import jakarta.persistence.Column;
+-import jakarta.persistence.MappedSuperclass;
++import javax.persistence.Column;
++import javax.persistence.MappedSuperclass;
+ 
+-import jakarta.validation.constraints.NotEmpty;
++import javax.validation.constraints.NotEmpty;
+ 
+ /**
+  * Simple JavaBean domain object representing an person.
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/Pet.java b/src/main/java/org/springframework/samples/petclinic/model/Pet.java
+index f5d3402..bf0883f 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/Pet.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/Pet.java
+@@ -19,7 +19,7 @@ import org.springframework.beans.support.MutableSortDefinition;
+ import org.springframework.beans.support.PropertyComparator;
+ import org.springframework.format.annotation.DateTimeFormat;
+ 
+-import jakarta.persistence.*;
++import javax.persistence.*;
+ import java.time.LocalDate;
+ import java.util.*;
+ 
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/PetType.java b/src/main/java/org/springframework/samples/petclinic/model/PetType.java
+index beecdec..f60a5cd 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/PetType.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/PetType.java
+@@ -15,8 +15,8 @@
+  */
+ package org.springframework.samples.petclinic.model;
+ 
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.Table;
++import javax.persistence.Entity;
++import javax.persistence.Table;
+ 
+ /**
+  * @author Juergen Hoeller
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/Role.java b/src/main/java/org/springframework/samples/petclinic/model/Role.java
+index da35c8e..8dd19a1 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/Role.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/Role.java
+@@ -1,11 +1,11 @@
+ package org.springframework.samples.petclinic.model;
+ 
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.JoinColumn;
+-import jakarta.persistence.ManyToOne;
+-import jakarta.persistence.Table;
+-import jakarta.persistence.UniqueConstraint;
++import javax.persistence.Column;
++import javax.persistence.Entity;
++import javax.persistence.JoinColumn;
++import javax.persistence.ManyToOne;
++import javax.persistence.Table;
++import javax.persistence.UniqueConstraint;
+ 
+ import com.fasterxml.jackson.annotation.JsonIgnore;
+ 
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/Specialty.java b/src/main/java/org/springframework/samples/petclinic/model/Specialty.java
+index 8eefd31..6ea209c 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/Specialty.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/Specialty.java
+@@ -15,8 +15,8 @@
+  */
+ package org.springframework.samples.petclinic.model;
+ 
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.Table;
++import javax.persistence.Entity;
++import javax.persistence.Table;
+ 
+ /**
+  * Models a {@link Vet Vet's} specialty (for example, dentistry).
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/User.java b/src/main/java/org/springframework/samples/petclinic/model/User.java
+index 62d412f..1bfe90a 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/User.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/User.java
+@@ -3,13 +3,13 @@ package org.springframework.samples.petclinic.model;
+ import java.util.HashSet;
+ import java.util.Set;
+ 
+-import jakarta.persistence.CascadeType;
+-import jakarta.persistence.Column;
+-import jakarta.persistence.Entity;
+-import jakarta.persistence.FetchType;
+-import jakarta.persistence.Id;
+-import jakarta.persistence.OneToMany;
+-import jakarta.persistence.Table;
++import javax.persistence.CascadeType;
++import javax.persistence.Column;
++import javax.persistence.Entity;
++import javax.persistence.FetchType;
++import javax.persistence.Id;
++import javax.persistence.OneToMany;
++import javax.persistence.Table;
+ 
+ import com.fasterxml.jackson.annotation.JsonIgnore;
+ 
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/Vet.java b/src/main/java/org/springframework/samples/petclinic/model/Vet.java
+index 3add8c8..acda93e 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/Vet.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/Vet.java
+@@ -19,8 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
+ import org.springframework.beans.support.MutableSortDefinition;
+ import org.springframework.beans.support.PropertyComparator;
+ 
+-import jakarta.persistence.*;
+-import jakarta.xml.bind.annotation.XmlElement;
++import javax.persistence.*;
++import javax.xml.bind.annotation.XmlElement;
+ import java.util.*;
+ 
+ /**
+diff --git a/src/main/java/org/springframework/samples/petclinic/model/Visit.java b/src/main/java/org/springframework/samples/petclinic/model/Visit.java
+index f98cb45..12fc30f 100644
+--- a/src/main/java/org/springframework/samples/petclinic/model/Visit.java
++++ b/src/main/java/org/springframework/samples/petclinic/model/Visit.java
+@@ -17,8 +17,8 @@ package org.springframework.samples.petclinic.model;
+ 
+ import org.springframework.format.annotation.DateTimeFormat;
+ 
+-import jakarta.persistence.*;
+-import jakarta.validation.constraints.NotEmpty;
++import javax.persistence.*;
++import javax.validation.constraints.NotEmpty;
+ import java.time.LocalDate;
+ 
+ /**
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/jdbc/JdbcOwnerRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/jdbc/JdbcOwnerRepositoryImpl.java
+index 406286b..3e263a6 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/jdbc/JdbcOwnerRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/jdbc/JdbcOwnerRepositoryImpl.java
+@@ -33,7 +33,7 @@ import org.springframework.samples.petclinic.util.EntityUtils;
+ import org.springframework.stereotype.Repository;
+ 
+ import javax.sql.DataSource;
+-import jakarta.transaction.Transactional;
++import javax.transaction.Transactional;
+ import java.util.Collection;
+ import java.util.HashMap;
+ import java.util.List;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaOwnerRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaOwnerRepositoryImpl.java
+index 3240d07..e4620c7 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaOwnerRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaOwnerRepositoryImpl.java
+@@ -17,9 +17,9 @@ package org.springframework.samples.petclinic.repository.jpa;
+ 
+ import java.util.Collection;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
+-import jakarta.persistence.Query;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
++import javax.persistence.Query;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.dao.DataAccessException;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaPetRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaPetRepositoryImpl.java
+index 8b04981..6940732 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaPetRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaPetRepositoryImpl.java
+@@ -18,8 +18,8 @@ package org.springframework.samples.petclinic.repository.jpa;
+ import java.util.Collection;
+ import java.util.List;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.dao.DataAccessException;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaPetTypeRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaPetTypeRepositoryImpl.java
+index 184aa38..f9fe6fe 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaPetTypeRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaPetTypeRepositoryImpl.java
+@@ -20,8 +20,8 @@ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.List;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.dao.DataAccessException;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaSpecialtyRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaSpecialtyRepositoryImpl.java
+index 3c95587..5e9a5eb 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaSpecialtyRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaSpecialtyRepositoryImpl.java
+@@ -20,8 +20,8 @@ import java.util.Collection;
+ import java.util.List;
+ import java.util.Set;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.dao.DataAccessException;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaUserRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaUserRepositoryImpl.java
+index de3fd4e..d73a7e9 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaUserRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaUserRepositoryImpl.java
+@@ -1,7 +1,7 @@
+ package org.springframework.samples.petclinic.repository.jpa;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.dao.DataAccessException;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaVetRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaVetRepositoryImpl.java
+index eed4dbb..745c164 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaVetRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaVetRepositoryImpl.java
+@@ -21,8 +21,8 @@ import org.springframework.samples.petclinic.model.Vet;
+ import org.springframework.samples.petclinic.repository.VetRepository;
+ import org.springframework.stereotype.Repository;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ import java.util.Collection;
+ 
+ /**
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaVisitRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaVisitRepositoryImpl.java
+index 79d0325..199290f 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaVisitRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/jpa/JpaVisitRepositoryImpl.java
+@@ -18,9 +18,9 @@ package org.springframework.samples.petclinic.repository.jpa;
+ import java.util.Collection;
+ import java.util.List;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
+-import jakarta.persistence.Query;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
++import javax.persistence.Query;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.dao.DataAccessException;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetRepositoryImpl.java
+index 4299505..05a7ce5 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetRepositoryImpl.java
+@@ -16,8 +16,8 @@
+ 
+ package org.springframework.samples.petclinic.repository.springdatajpa;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.samples.petclinic.model.Pet;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetTypeRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetTypeRepositoryImpl.java
+index 5350c4e..94d3c8d 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetTypeRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetTypeRepositoryImpl.java
+@@ -21,8 +21,8 @@ import org.springframework.samples.petclinic.model.Pet;
+ import org.springframework.samples.petclinic.model.PetType;
+ import org.springframework.samples.petclinic.model.Visit;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ import java.util.List;
+ 
+ /**
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataSpecialtyRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataSpecialtyRepositoryImpl.java
+index 940625f..26841d5 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataSpecialtyRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataSpecialtyRepositoryImpl.java
+@@ -16,8 +16,8 @@
+ 
+ package org.springframework.samples.petclinic.repository.springdatajpa;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.samples.petclinic.model.Specialty;
+diff --git a/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataVisitRepositoryImpl.java b/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataVisitRepositoryImpl.java
+index 4c2fcc0..8dc65f8 100644
+--- a/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataVisitRepositoryImpl.java
++++ b/src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataVisitRepositoryImpl.java
+@@ -16,8 +16,8 @@
+ 
+ package org.springframework.samples.petclinic.repository.springdatajpa;
+ 
+-import jakarta.persistence.EntityManager;
+-import jakarta.persistence.PersistenceContext;
++import javax.persistence.EntityManager;
++import javax.persistence.PersistenceContext;
+ 
+ import org.springframework.context.annotation.Profile;
+ import org.springframework.dao.DataAccessException;
+diff --git a/src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java b/src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java
+index a01b1eb..0751d9c 100644
+--- a/src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java
++++ b/src/main/java/org/springframework/samples/petclinic/rest/advice/ExceptionControllerAdvice.java
+@@ -53,10 +53,26 @@ public class ExceptionControllerAdvice {
+      * @param className The name of the exception class
+      * @param exMessage The message of the exception
+      */
+-    private record ErrorInfo(String className, String exMessage) {
++    private static class ErrorInfo {
++        private final String className;
++        private final String exMessage;
++
++        public ErrorInfo(String className, String exMessage) {
++            this.className = className;
++            this.exMessage = exMessage;
++        }
++
+         public ErrorInfo(Exception ex) {
+             this(ex.getClass().getName(), ex.getLocalizedMessage());
+         }
++
++        public String getClassName() {
++            return className;
++        }
++
++        public String getExMessage() {
++            return exMessage;
++        }
+     }
+ 
+     /**
+diff --git a/src/main/java/org/springframework/samples/petclinic/rest/controller/OwnerRestController.java b/src/main/java/org/springframework/samples/petclinic/rest/controller/OwnerRestController.java
+index 906f8f5..8201480 100644
+--- a/src/main/java/org/springframework/samples/petclinic/rest/controller/OwnerRestController.java
++++ b/src/main/java/org/springframework/samples/petclinic/rest/controller/OwnerRestController.java
+@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RestController;
+ import org.springframework.web.util.UriComponentsBuilder;
+ 
+-import jakarta.transaction.Transactional;
++import javax.transaction.Transactional;
+ 
+ import java.util.Collection;
+ import java.util.List;
+diff --git a/src/main/java/org/springframework/samples/petclinic/rest/controller/PetTypeRestController.java b/src/main/java/org/springframework/samples/petclinic/rest/controller/PetTypeRestController.java
+index 3d0f423..cf3daf1 100644
+--- a/src/main/java/org/springframework/samples/petclinic/rest/controller/PetTypeRestController.java
++++ b/src/main/java/org/springframework/samples/petclinic/rest/controller/PetTypeRestController.java
+@@ -29,7 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.bind.annotation.*;
+ import org.springframework.web.util.UriComponentsBuilder;
+ 
+-import jakarta.transaction.Transactional;
++import javax.transaction.Transactional;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
+diff --git a/src/main/java/org/springframework/samples/petclinic/rest/controller/RootRestController.java b/src/main/java/org/springframework/samples/petclinic/rest/controller/RootRestController.java
+index 7984f66..c407872 100644
+--- a/src/main/java/org/springframework/samples/petclinic/rest/controller/RootRestController.java
++++ b/src/main/java/org/springframework/samples/petclinic/rest/controller/RootRestController.java
+@@ -18,7 +18,7 @@ package org.springframework.samples.petclinic.rest.controller;
+ 
+ import java.io.IOException;
+ 
+-import jakarta.servlet.http.HttpServletResponse;
++import javax.servlet.http.HttpServletResponse;
+ 
+ import org.springframework.beans.factory.annotation.Value;
+ import org.springframework.web.bind.annotation.CrossOrigin;
+diff --git a/src/main/java/org/springframework/samples/petclinic/rest/controller/SpecialtyRestController.java b/src/main/java/org/springframework/samples/petclinic/rest/controller/SpecialtyRestController.java
+index 0b82e81..723fd32 100644
+--- a/src/main/java/org/springframework/samples/petclinic/rest/controller/SpecialtyRestController.java
++++ b/src/main/java/org/springframework/samples/petclinic/rest/controller/SpecialtyRestController.java
+@@ -28,7 +28,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.bind.annotation.*;
+ import org.springframework.web.util.UriComponentsBuilder;
+ 
+-import jakarta.transaction.Transactional;
++import javax.transaction.Transactional;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
+diff --git a/src/main/java/org/springframework/samples/petclinic/rest/controller/UserRestController.java b/src/main/java/org/springframework/samples/petclinic/rest/controller/UserRestController.java
+index ce1d843..f9a7d96 100644
+--- a/src/main/java/org/springframework/samples/petclinic/rest/controller/UserRestController.java
++++ b/src/main/java/org/springframework/samples/petclinic/rest/controller/UserRestController.java
+@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
+ import org.springframework.web.bind.annotation.RequestMapping;
+ import org.springframework.web.bind.annotation.RestController;
+ 
+-import jakarta.validation.Valid;
++import javax.validation.Valid;
+ 
+ @RestController
+ @CrossOrigin(exposedHeaders = "errors, content-type")
+diff --git a/src/main/java/org/springframework/samples/petclinic/rest/controller/VetRestController.java b/src/main/java/org/springframework/samples/petclinic/rest/controller/VetRestController.java
+index 531dede..3876b91 100644
+--- a/src/main/java/org/springframework/samples/petclinic/rest/controller/VetRestController.java
++++ b/src/main/java/org/springframework/samples/petclinic/rest/controller/VetRestController.java
+@@ -29,7 +29,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.bind.annotation.*;
+ import org.springframework.web.util.UriComponentsBuilder;
+ 
+-import jakarta.transaction.Transactional;
++import javax.transaction.Transactional;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.stream.Collectors;
+diff --git a/src/main/java/org/springframework/samples/petclinic/rest/controller/VisitRestController.java b/src/main/java/org/springframework/samples/petclinic/rest/controller/VisitRestController.java
+index 138f040..bae92d2 100644
+--- a/src/main/java/org/springframework/samples/petclinic/rest/controller/VisitRestController.java
++++ b/src/main/java/org/springframework/samples/petclinic/rest/controller/VisitRestController.java
+@@ -28,7 +28,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
+ import org.springframework.web.bind.annotation.*;
+ import org.springframework.web.util.UriComponentsBuilder;
+ 
+-import jakarta.transaction.Transactional;
++import javax.transaction.Transactional;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
+diff --git a/src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java b/src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java
+index b91e1e4..a2cd306 100644
+--- a/src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java
++++ b/src/main/java/org/springframework/samples/petclinic/security/BasicAuthenticationConfig.java
+@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
+ import org.springframework.security.web.SecurityFilterChain;
+ 
+ import javax.sql.DataSource;
++
++import java.util.HashMap;
+ import java.util.Map;
+ 
+ @Configuration
+@@ -27,8 +29,9 @@ public class BasicAuthenticationConfig {
+ 
+     @Bean
+     public PasswordEncoder passwordEncoder() {
+-        var encoders = Map.of("noop", NoOpPasswordEncoder.getInstance());
+-        var passwordEncoder = new DelegatingPasswordEncoder("noop", encoders);
++        Map<String, PasswordEncoder> encoders = new HashMap<>();
++        encoders.put("noop", NoOpPasswordEncoder.getInstance());
++        DelegatingPasswordEncoder passwordEncoder = new DelegatingPasswordEncoder("noop", encoders);
+         passwordEncoder.setDefaultPasswordEncoderForMatches(NoOpPasswordEncoder.getInstance());
+         return passwordEncoder;
+     }
+diff --git a/src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java b/src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java
+index a441303..dfd2105 100644
+--- a/src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java
++++ b/src/test/java/org/springframework/samples/petclinic/model/ValidatorTests.java
+@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
+ import java.util.Locale;
+ import java.util.Set;
+ 
+-import jakarta.validation.ConstraintViolation;
+-import jakarta.validation.Validator;
++import javax.validation.ConstraintViolation;
++import javax.validation.Validator;
+ 
+ import org.junit.jupiter.api.Test;
+ import org.springframework.context.i18n.LocaleContextHolder;
+diff --git a/src/test/java/org/springframework/samples/petclinic/rest/controller/OwnerRestControllerTests.java b/src/test/java/org/springframework/samples/petclinic/rest/controller/OwnerRestControllerTests.java
+index c456128..9a738d3 100644
+--- a/src/test/java/org/springframework/samples/petclinic/rest/controller/OwnerRestControllerTests.java
++++ b/src/test/java/org/springframework/samples/petclinic/rest/controller/OwnerRestControllerTests.java
+@@ -29,6 +29,7 @@ import org.springframework.samples.petclinic.mapper.OwnerMapper;
+ import org.springframework.samples.petclinic.mapper.PetMapper;
+ import org.springframework.samples.petclinic.mapper.VisitMapper;
+ import org.springframework.samples.petclinic.model.Owner;
++import org.springframework.samples.petclinic.model.Pet;
+ import org.springframework.samples.petclinic.rest.advice.ExceptionControllerAdvice;
+ import org.springframework.samples.petclinic.rest.dto.OwnerDto;
+ import org.springframework.samples.petclinic.rest.dto.PetDto;
+@@ -398,9 +399,9 @@ class OwnerRestControllerTests {
+     @Test
+     @WithMockUser(roles = "OWNER_ADMIN")
+     void testGetOwnerPetSuccess() throws Exception {
+-        var owner = ownerMapper.toOwner(owners.get(0));
++        Owner owner = ownerMapper.toOwner(owners.get(0));
+         given(this.clinicService.findOwnerById(2)).willReturn(owner);
+-        var pet = petMapper.toPet(pets.get(0));
++        Pet pet = petMapper.toPet(pets.get(0));
+         pet.setOwner(owner);
+         given(this.clinicService.findPetById(1)).willReturn(pet);
+         this.mockMvc.perform(get("/api/owners/2/pets/1")
+@@ -422,7 +423,7 @@ class OwnerRestControllerTests {
+     @Test
+     @WithMockUser(roles = "OWNER_ADMIN")
+     void testGetOwnersPetsWithPetNotFound() throws Exception {
+-        var owner1 = ownerMapper.toOwner(owners.get(0));
++        Owner owner1 = ownerMapper.toOwner(owners.get(0));
+         given(this.clinicService.findOwnerById(1)).willReturn(owner1);
+         this.mockMvc.perform(get("/api/owners/1/pets/2")
+                 .accept(MediaType.APPLICATION_JSON))
+diff --git a/src/test/java/org/springframework/samples/petclinic/service/clinicService/AbstractClinicServiceTests.java b/src/test/java/org/springframework/samples/petclinic/service/clinicService/AbstractClinicServiceTests.java
+index aff2ec1..47401b6 100644
+--- a/src/test/java/org/springframework/samples/petclinic/service/clinicService/AbstractClinicServiceTests.java
++++ b/src/test/java/org/springframework/samples/petclinic/service/clinicService/AbstractClinicServiceTests.java
+@@ -24,6 +24,7 @@ import org.springframework.test.context.ContextConfiguration;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+ import java.time.LocalDate;
++import java.util.Arrays;
+ import java.util.Collection;
+ import java.util.List;
+ import java.util.Set;
+@@ -485,7 +486,7 @@ abstract class AbstractClinicServiceTests {
+         Specialty specialty3 = new Specialty();
+         specialty3.setName("dentistry");
+         specialty3.setId(3);
+-        List<Specialty> expectedSpecialties = List.of(specialty1, specialty2, specialty3);
++        List<Specialty> expectedSpecialties = Arrays.asList(specialty1, specialty2, specialty3);
+         Set<String> specialtyNames = expectedSpecialties.stream()
+             .map(Specialty::getName)
+             .collect(Collectors.toSet());
