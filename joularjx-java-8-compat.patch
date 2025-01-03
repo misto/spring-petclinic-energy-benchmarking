@@ -1,0 +1,372 @@
+diff --git a/pom.xml b/pom.xml
+index 9c4a1d5..7c889e2 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -36,7 +36,7 @@
+     </licenses>
+ 
+     <properties>
+-        <maven.compiler.release>11</maven.compiler.release>
++        <maven.compiler.release>8</maven.compiler.release>
+         <encoding>UTF-8</encoding>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     </properties>
+diff --git a/src/main/java/org/noureddine/joularjx/Agent.java b/src/main/java/org/noureddine/joularjx/Agent.java
+index 9a14ab9..1c1431b 100644
+--- a/src/main/java/org/noureddine/joularjx/Agent.java
++++ b/src/main/java/org/noureddine/joularjx/Agent.java
+@@ -52,7 +52,7 @@ public class Agent {
+         ThreadMXBean threadBean = createThreadBean();
+ 
+         // Get Process ID of current application
+-        long appPid = ProcessHandle.current().pid();
++        long appPid = Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]);
+ 
+         // Creating the required folders to store the result files generated later on
+         ResultTreeManager resultTreeManager = new ResultTreeManager(properties, appPid, System.currentTimeMillis());
+diff --git a/src/main/java/org/noureddine/joularjx/cpu/CpuFactory.java b/src/main/java/org/noureddine/joularjx/cpu/CpuFactory.java
+index 8850568..285d624 100644
+--- a/src/main/java/org/noureddine/joularjx/cpu/CpuFactory.java
++++ b/src/main/java/org/noureddine/joularjx/cpu/CpuFactory.java
+@@ -18,6 +18,7 @@ import java.io.File;
+ import java.io.IOException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
++import java.nio.file.Paths;
+ import java.util.List;
+ import java.util.Optional;
+ import java.util.logging.Level;
+@@ -101,7 +102,7 @@ public class CpuFactory {
+             return Optional.empty();
+         }
+ 
+-        Path deviceTreeModelPath = Path.of(deviceTreeModel);
++        Path deviceTreeModelPath = Paths.get(deviceTreeModel);
+         try {
+             List<String> allLines = Files.readAllLines(deviceTreeModelPath);
+             for (String currentLine : allLines) {
+diff --git a/src/main/java/org/noureddine/joularjx/cpu/IntelWindows.java b/src/main/java/org/noureddine/joularjx/cpu/IntelWindows.java
+index c9a8496..26aa210 100644
+--- a/src/main/java/org/noureddine/joularjx/cpu/IntelWindows.java
++++ b/src/main/java/org/noureddine/joularjx/cpu/IntelWindows.java
+@@ -39,7 +39,7 @@ public class IntelWindows implements Cpu {
+     private boolean initialized;
+ 
+     public IntelWindows(final String programPath) {
+-        if (programPath == null || programPath.isBlank()) {
++        if (programPath == null || programPath.trim().isEmpty()) {
+             logger.severe("Can't start because of missing power monitor path. Set it in config.properties under the '" + AgentProperties.POWER_MONITOR_PATH_PROPERTY + "' key.");
+             System.exit(1);
+         }
+diff --git a/src/main/java/org/noureddine/joularjx/cpu/PowermetricsMacOS.java b/src/main/java/org/noureddine/joularjx/cpu/PowermetricsMacOS.java
+index cea9dac..b8c6b40 100644
+--- a/src/main/java/org/noureddine/joularjx/cpu/PowermetricsMacOS.java
++++ b/src/main/java/org/noureddine/joularjx/cpu/PowermetricsMacOS.java
+@@ -87,7 +87,7 @@ public class PowermetricsMacOS implements Cpu {
+                 }
+ 
+                 // for Intel chips, the: "Intel energy model derived package power (CPUs+GT+SA): xxx W" pattern
+-                final var i = line.indexOf(POWER_INDICATOR_INTEL_CHIP);
++                final int i = line.indexOf(POWER_INDICATOR_INTEL_CHIP);
+                 if (i >= 0) {
+                     powerInWatts += Double.parseDouble(line.substring(i + POWER_INDICATOR_INTEL_CHIP.length(), line.indexOf('W')));
+                 }
+@@ -113,7 +113,7 @@ public class PowermetricsMacOS implements Cpu {
+                 }
+ 
+                 // looking for line fitting the: "<name> Power: xxx mW" pattern and add all of the associated values together
+-                final var i = line.indexOf(POWER_INDICATOR_M_CHIP);
++                final int i = line.indexOf(POWER_INDICATOR_M_CHIP);
+                 if (i >= 0 && '-' != line.charAt(1) && !line.startsWith("Combined")) {
+                     powerInMilliwatts += Integer.parseInt(line.substring(i + POWER_INDICATOR_M_CHIP.length(), line.indexOf('m') - 1));
+                 }
+diff --git a/src/main/java/org/noureddine/joularjx/cpu/RaplLinux.java b/src/main/java/org/noureddine/joularjx/cpu/RaplLinux.java
+index 06bbe52..09a25fc 100644
+--- a/src/main/java/org/noureddine/joularjx/cpu/RaplLinux.java
++++ b/src/main/java/org/noureddine/joularjx/cpu/RaplLinux.java
+@@ -136,7 +136,7 @@ public class RaplLinux implements Cpu {
+ 
+         for (final Path raplFile : raplFilesToRead) {
+             try {
+-                energyData += Double.parseDouble(Files.readString(raplFile));
++                energyData += Double.parseDouble(new String(Files.readAllBytes(raplFile)));
+             } catch (IOException exception) {
+                 logger.throwing(getClass().getName(), "getCurrentPower", exception);
+             }
+@@ -156,7 +156,7 @@ public class RaplLinux implements Cpu {
+ 
+         for (final Path raplFile : maxRaplFilesToRead) {
+             try {
+-                energyData += Double.parseDouble(Files.readString(raplFile));
++                energyData += Double.parseDouble(new String(Files.readAllBytes(raplFile)));
+             } catch (IOException exception) {
+                 logger.throwing(getClass().getName(), "getMaxPower", exception);
+             }
+diff --git a/src/main/java/org/noureddine/joularjx/cpu/VirtualMachine.java b/src/main/java/org/noureddine/joularjx/cpu/VirtualMachine.java
+index 885c330..a696e6b 100644
+--- a/src/main/java/org/noureddine/joularjx/cpu/VirtualMachine.java
++++ b/src/main/java/org/noureddine/joularjx/cpu/VirtualMachine.java
+@@ -84,9 +84,9 @@ public class VirtualMachine implements Cpu {
+ 
+         try {
+             if (VM_POWER_FORMAT.equals("watts")) {
+-                powerData = Double.parseDouble(Files.readString(VM_POWER_PATH));
++                powerData = Double.parseDouble(new String(Files.readAllBytes(VM_POWER_PATH)));
+             } else if (VM_POWER_FORMAT.equals("powerjoular")) {
+-                String[] powerDataInfo = Files.readString(VM_POWER_PATH).split(",");
++                String[] powerDataInfo = new String(Files.readAllBytes(VM_POWER_PATH)).split(",");
+                 // Get 3rd column (index 2) for power consumption
+                 powerData = Double.parseDouble(powerDataInfo[2]);
+             } else {
+diff --git a/src/main/java/org/noureddine/joularjx/monitor/MonitoringHandler.java b/src/main/java/org/noureddine/joularjx/monitor/MonitoringHandler.java
+index fdf1488..81b714e 100644
+--- a/src/main/java/org/noureddine/joularjx/monitor/MonitoringHandler.java
++++ b/src/main/java/org/noureddine/joularjx/monitor/MonitoringHandler.java
+@@ -90,9 +90,9 @@ public class MonitoringHandler implements Runnable {
+             try {
+                 double energyBefore = cpu.getInitialPower();
+ 
+-                var samples = sample();
+-                var methodsStats = extractStats(samples, methodName -> true);
+-                var methodsStatsFiltered = extractStats(samples, properties::filtersMethod);
++                Map<Thread, List<StackTraceElement[]>> samples = sample();
++                Map<Thread, Map<String, Integer>> methodsStats = extractStats(samples, methodName -> true);
++                Map<Thread, Map<String, Integer>> methodsStatsFiltered = extractStats(samples, properties::filtersMethod);
+ 
+                 //Collecting call trees stats only if the option is enabled
+                 Map<Thread, Map<CallTree, Integer>> callTreesStats = null;
+@@ -134,7 +134,7 @@ public class MonitoringHandler implements Runnable {
+ //                long totalThreadsCpuTime = updateThreadsCpuTime(methodsStats, threadsCpuTime);
+ //                var threadCpuTimePercentages = getThreadsCpuTimePercentage(threadsCpuTime, totalThreadsCpuTime, processEnergy);
+ 
+-                var threadCpuTimePercentages = getThreadsCpuTimePercentage(methodsStats, threadsCpuTime, processEnergy);
++                Map<Long, Double> threadCpuTimePercentages = getThreadsCpuTimePercentage(methodsStats, threadsCpuTime, processEnergy);
+                 
+                 updateMethodsConsumedEnergy(methodsStats, threadCpuTimePercentages, status::addMethodConsumedEnergy, Scope.ALL);
+                 updateMethodsConsumedEnergy(methodsStatsFiltered, threadCpuTimePercentages, status::addFilteredMethodConsumedEnergy, Scope.FILTERED);
+@@ -187,7 +187,7 @@ public class MonitoringHandler implements Runnable {
+         Map<Thread, List<StackTraceElement[]>> result = new HashMap<>();
+         try {
+             for (int duration = 0; duration < sampleTimeMilliseconds; duration += sampleRateMilliseconds) {
+-                for (var entry : Thread.getAllStackTraces().entrySet()) {
++                for (Entry<Thread, StackTraceElement[]> entry : Thread.getAllStackTraces().entrySet()) {
+                     String threadName = entry.getKey().getName();
+                     //Ignoring agent related threads, if option is enabled
+                     if(this.properties.hideAgentConsumption() && (threadName.equals(Agent.COMPUTATION_THREAD_NAME))) {
+@@ -196,7 +196,7 @@ public class MonitoringHandler implements Runnable {
+ 
+                     // Only check runnable threads (not waiting or blocked)
+                     if (entry.getKey().getState() == Thread.State.RUNNABLE) {
+-                        var target = result.computeIfAbsent(entry.getKey(),
++                        List<StackTraceElement[]> target = result.computeIfAbsent(entry.getKey(),
+                                 t -> new ArrayList<>(sampleIterations));
+                         target.add(entry.getValue());
+                     }
+@@ -221,13 +221,15 @@ public class MonitoringHandler implements Runnable {
+                                                            Predicate<String> covers) {
+         Map<Thread, Map<String, Integer>> stats = new HashMap<>();
+ 
+-        for (var entry : samples.entrySet()) {
++        for (Entry<Thread, List<StackTraceElement[]>> entry : samples.entrySet()) {
+             Map<String, Integer> target = new HashMap<>();
+             stats.put(entry.getKey(), target);
+ 
+             for (StackTraceElement[] stackTrace : entry.getValue()) {
+                 for (StackTraceElement stackTraceElement : stackTrace) {
+-                    String methodName = stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName();
++                    String stackTraceElementClassName = stackTraceElement.getClassName();
++                    String classNameWithoutAnonymousNameParts = stackTraceElementClassName.replaceFirst("\\$\\$.*CGLIB.*", "");
++                    String methodName = classNameWithoutAnonymousNameParts + "." + stackTraceElement.getMethodName();
+                     if (covers.test(methodName)) {
+                         target.merge(methodName, 1, Integer::sum);
+                         break;
+@@ -248,11 +250,11 @@ public class MonitoringHandler implements Runnable {
+     private Map<Thread, Map<CallTree, Integer>> extractCallTreesStats(Map<Thread, List<StackTraceElement[]>> samples, Predicate<String> filter){
+         Map<Thread, Map<CallTree, Integer>> stats = new HashMap<>();
+ 
+-        for (var entry : samples.entrySet()) {
++        for (Entry<Thread, List<StackTraceElement[]>> entry : samples.entrySet()) {
+             Map<CallTree, Integer> target = new HashMap<>();
+             stats.put(entry.getKey(), target);
+ 
+-            for (var stackTraceEntry : entry.getValue()) {
++            for (StackTraceElement[] stackTraceEntry : entry.getValue()) {
+                 List<StackTraceElement> stackTrace = StackTraceFilter.filter(stackTraceEntry, filter);
+                 if (!stackTrace.isEmpty()) {
+                     target.merge(new CallTree(stackTrace), 1, Integer::sum);
+@@ -317,9 +319,9 @@ public class MonitoringHandler implements Runnable {
+                                              Map<Long, Double> threadCpuTimePercentages,
+                                              ObjDoubleConsumer<String> updateMethodConsumedEnergy,
+                                              Scope scope) {
+-        for (var threadEntry : methodsStats.entrySet()) {
++        for (Entry<Thread, Map<String, Integer>> threadEntry : methodsStats.entrySet()) {
+             double totalEncounters = threadEntry.getValue().values().stream().mapToDouble(i -> i).sum();
+-            for (var methodEntry : threadEntry.getValue().entrySet()) {
++            for (Entry<String, Integer> methodEntry : threadEntry.getValue().entrySet()) {
+                 double methodPower = 0.0;
+                 if(totalEncounters >= Double.MIN_VALUE) {
+                     methodPower = threadCpuTimePercentages.get(threadEntry.getKey().getId()) * (methodEntry.getValue() / totalEncounters);
+@@ -349,10 +351,10 @@ public class MonitoringHandler implements Runnable {
+      * @param callTreeConsumer the method used to update the energy consumption
+      */
+     private void updateCallTreesConsumedEnergy(Map<Thread, Map<CallTree, Integer>> stats, Map<Long, Double> threadCpuTimePercentages, ObjDoubleConsumer<CallTree> callTreeConsumer) {
+-        for (var entry : stats.entrySet()) {
++        for (Entry<Thread, Map<CallTree, Integer>> entry : stats.entrySet()) {
+             double totalEncounters = entry.getValue().values().stream().mapToDouble(i -> i).sum();
+ 
+-            for (var callTreeEntry : entry.getValue().entrySet()) {
++            for (Entry<CallTree, Integer> callTreeEntry : entry.getValue().entrySet()) {
+                 double stackTracePower = 0.0;
+                 if (totalEncounters >= Double.MIN_VALUE) {
+                      stackTracePower = threadCpuTimePercentages.get(entry.getKey().getId()) * (callTreeEntry.getValue() / totalEncounters);
+@@ -385,8 +387,8 @@ public class MonitoringHandler implements Runnable {
+     public <K> void saveResults(Map<Thread, Map<K,Integer>> stats,  Map<Long, Double> threadCpuTimePercentages, String filePath) throws IOException {
+         resultWriter.setTarget(filePath, true);
+ 
+-            for (var statEntry : stats.entrySet()) {
+-                for (var entry : statEntry.getValue().entrySet()) {
++            for (Entry<Thread, Map<K, Integer>> statEntry : stats.entrySet()) {
++                for (Entry<K, Integer> entry : statEntry.getValue().entrySet()) {
+                     double power = threadCpuTimePercentages.get(statEntry.getKey().getId()) * (entry.getValue() / 100.0);
+                     resultWriter.write(entry.getKey().toString(), power);
+                 }
+diff --git a/src/main/java/org/noureddine/joularjx/monitor/ShutdownHandler.java b/src/main/java/org/noureddine/joularjx/monitor/ShutdownHandler.java
+index 031a1a9..24667d9 100644
+--- a/src/main/java/org/noureddine/joularjx/monitor/ShutdownHandler.java
++++ b/src/main/java/org/noureddine/joularjx/monitor/ShutdownHandler.java
+@@ -74,12 +74,12 @@ public class ShutdownHandler implements Runnable {
+             //Writing consumption evolution files only if the option is enabled
+             if (this.properties.trackConsumptionEvolution()) {
+                 //All methods
+-                for (var methodEntry : this.status.getMethodsConsumptionEvolution().entrySet()) {
++                for (Map.Entry<String, Map<Long, Double>> methodEntry : this.status.getMethodsConsumptionEvolution().entrySet()) {
+                     this.saveResults(methodEntry.getValue(), this.resultTreeManager.getAllEvolutionPath()+String.format("/joularJX-%d-%s-evolution", appPid, methodEntry.getKey().replace('<', '_').replace('>', '_')));
+                 }
+                 
+                 //Filtered methods
+-                for (var methodEntry : this.status.getFilteredMethodsConsumptionEvolution().entrySet()) {
++                for (Map.Entry<String, Map<Long, Double>> methodEntry : this.status.getFilteredMethodsConsumptionEvolution().entrySet()) {
+                     this.saveResults(methodEntry.getValue(), this.resultTreeManager.getFilteredEvolutionPath()+String.format("/joularJX-%d-%s-evolution", appPid, methodEntry.getKey().replace('<', '_').replace('>', '_')));
+                 }
+             }
+@@ -107,7 +107,7 @@ public class ShutdownHandler implements Runnable {
+         //String fileName = String.format("joularJX-%d-%s-%s", appPid, nodeType, dataType);
+         resultWriter.setTarget(filePath, true);
+ 
+-        for (var entry : consumedEnergyMap.entrySet()) {
++        for (Map.Entry<K, Double> entry : consumedEnergyMap.entrySet()) {
+             resultWriter.write(entry.getKey().toString(), entry.getValue());
+         }
+ 
+diff --git a/src/main/java/org/noureddine/joularjx/result/CsvResultWriter.java b/src/main/java/org/noureddine/joularjx/result/CsvResultWriter.java
+index 1748845..33aaac5 100644
+--- a/src/main/java/org/noureddine/joularjx/result/CsvResultWriter.java
++++ b/src/main/java/org/noureddine/joularjx/result/CsvResultWriter.java
+@@ -12,10 +12,7 @@ package org.noureddine.joularjx.result;
+ 
+ import java.io.BufferedWriter;
+ import java.io.IOException;
+-import java.nio.file.Files;
+-import java.nio.file.OpenOption;
+-import java.nio.file.Path;
+-import java.nio.file.StandardOpenOption;
++import java.nio.file.*;
+ import java.util.Locale;
+ 
+ public class CsvResultWriter implements ResultWriter {
+@@ -58,6 +55,6 @@ public class CsvResultWriter implements ResultWriter {
+     }
+ 
+     private Path getPath(String name) {
+-        return Path.of(name + ".csv");
++        return Paths.get(name + ".csv");
+     }
+ }
+diff --git a/src/main/java/org/noureddine/joularjx/utils/AgentProperties.java b/src/main/java/org/noureddine/joularjx/utils/AgentProperties.java
+index fba9628..61e3d31 100644
+--- a/src/main/java/org/noureddine/joularjx/utils/AgentProperties.java
++++ b/src/main/java/org/noureddine/joularjx/utils/AgentProperties.java
+@@ -167,7 +167,7 @@ public class AgentProperties {
+         if (filterMethods == null || filterMethods.isEmpty()) {
+             return Collections.emptyList();
+         }
+-        return Set.of(filterMethods.split(","));
++        return new HashSet<>(Arrays.asList(filterMethods.split(",")));
+     }
+ 
+     public String loadPowerMonitorPath() {
+diff --git a/src/test/java/org/noureddine/joularjx/cpu/PowermetricsMacOSTest.java b/src/test/java/org/noureddine/joularjx/cpu/PowermetricsMacOSTest.java
+index 0a4f781..6bf0b4e 100644
+--- a/src/test/java/org/noureddine/joularjx/cpu/PowermetricsMacOSTest.java
++++ b/src/test/java/org/noureddine/joularjx/cpu/PowermetricsMacOSTest.java
+@@ -102,8 +102,8 @@ public class PowermetricsMacOSTest {
+         BufferedReader reader = new BufferedReader(new InputStreamReader(intermittentInputStream));
+ 
+         // create the content blocks including headers
+-        final String contents1 = "\n".repeat(10) + "CPU Power: 742 mW\n".repeat(2);
+-        final String contents2 = "\n".repeat(10) + "CPU Power: 1200 mW\n".repeat(2);
++        final String contents1 = new String(new char[10]).replace("\0", "\n") + "CPU Power: 742 mW\nCPU Power: 742 mW\n";
++        final String contents2 = new String(new char[10]).replace("\0", "\n") + "CPU Power: 1200 mW\nCPU Power: 1200 mW\n";
+ 
+         PowermetricsMacOS cpu = new PowermetricsMacOS() {
+             @Override
+diff --git a/src/test/java/org/noureddine/joularjx/cpu/RaplLinuxTest.java b/src/test/java/org/noureddine/joularjx/cpu/RaplLinuxTest.java
+index 56059ff..d8ad58a 100644
+--- a/src/test/java/org/noureddine/joularjx/cpu/RaplLinuxTest.java
++++ b/src/test/java/org/noureddine/joularjx/cpu/RaplLinuxTest.java
+@@ -21,6 +21,7 @@ import org.junit.jupiter.api.condition.OS;
+ import org.noureddine.joularjx.utils.JoularJXLogging;
+ 
+ import java.io.IOException;
++import java.nio.charset.StandardCharsets;
+ import java.nio.file.FileSystem;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+@@ -61,8 +62,8 @@ class RaplLinuxTest {
+         Path psys = fileSystem.getPath(RaplLinux.RAPL_PSYS);
+         Path psysMax = fileSystem.getPath(RaplLinux.RAPL_PSYS_MAX);
+         Files.createDirectories(psys.getParent());
+-        Files.writeString(psys, "1000000");
+-        Files.writeString(psysMax, "1000000");
++        Files.write(psys, "1000000".getBytes(StandardCharsets.UTF_8));
++        Files.write(psysMax, "1000000".getBytes(StandardCharsets.UTF_8));
+ 
+         cpu.initialize();
+ 
+@@ -74,8 +75,8 @@ class RaplLinuxTest {
+         Path pkg = fileSystem.getPath(RaplLinux.RAPL_PKG);
+         Path pkgMax = fileSystem.getPath(RaplLinux.RAPL_PKG_MAX);
+         Files.createDirectories(pkg.getParent());
+-        Files.writeString(pkg, "1000000");
+-        Files.writeString(pkgMax, "1000000");
++        Files.write(pkg, "1000000".getBytes(StandardCharsets.UTF_8));
++        Files.write(pkgMax, "1000000".getBytes(StandardCharsets.UTF_8));
+ 
+         cpu.initialize();
+ 
+@@ -93,10 +94,10 @@ class RaplLinuxTest {
+         Files.createDirectories(pkg.getParent());
+         Files.createDirectories(dram.getParent());
+ 
+-        Files.writeString(pkg, "1000000");
+-        Files.writeString(dram, "1000000");
+-        Files.writeString(pkgMax, "1000000");
+-        Files.writeString(dramMax, "1000000");
++        Files.write(pkg, "1000000".getBytes(StandardCharsets.UTF_8));
++        Files.write(dram, "1000000".getBytes(StandardCharsets.UTF_8));
++        Files.write(pkgMax, "1000000".getBytes(StandardCharsets.UTF_8));
++        Files.write(dramMax, "1000000".getBytes(StandardCharsets.UTF_8));
+ 
+         cpu.initialize();
+ 
+@@ -109,8 +110,8 @@ class RaplLinuxTest {
+         Path psys = fileSystem.getPath(RaplLinux.RAPL_PSYS);
+         Path psysMax = fileSystem.getPath(RaplLinux.RAPL_PSYS_MAX);
+         Files.createDirectories(psys.getParent());
+-        Files.writeString(psys, "1000000");
+-        Files.writeString(psysMax, "1000000");
++        Files.write(psys, "1000000".getBytes(StandardCharsets.UTF_8));
++        Files.write(psysMax, "1000000".getBytes(StandardCharsets.UTF_8));
+ 
+         assertTrue(Files.isReadable(psys));
+         assertTrue(Files.isWritable(psys));
