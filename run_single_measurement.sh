@@ -289,9 +289,10 @@ extract_run_properties() {
   echo "| Extracting Run Properties"
   echo "+================================+"
 
-  used_jvm_version=$(java -version 2>&1 | awk -F ' ' '/Runtime/ {print $4}')
+  # used_jvm_version=$(java -XshowSettings:properties -version 2>&1 | grep "java.runtime.version" | sed -e 's/^[^=]*= *//' -e 's/ *$//')
+  # used_jvm_vendor=$(java -XshowSettings:properties -version 2>&1 | grep "java.vendor " | sed -e 's/^[^=]*= *//' -e 's/ *$//')
 
-  echo "JVM: $used_jvm_version"
+  echo "JVM: $jvm_version"
 
   used_java_version=$(javap -verbose $APP_HOME/target/classes/org/springframework/samples/petclinic/PetClinicApplication.class | grep "major version" | awk '{print $3 - 44}')
 
@@ -328,7 +329,7 @@ extract_run_properties() {
   results_output_file="$OUTPUT_FOLDER/results.txt"
 
   > "$results_output_file"
-  echo "JVM: $used_jvm_version" >> "$results_output_file"
+  echo "JVM: $jvm_version" >> "$results_output_file"
   echo "Java: $used_java_version" >> "$results_output_file"
   echo "Spring-Boot: $used_spring_boot_version" >> "$results_output_file"
   echo "Spring: $used_spring_version" >> "$results_output_file"
@@ -341,7 +342,7 @@ extract_run_properties() {
   find_command="find $OUTPUT_FOLDER/ -name '*filtered-methods-energy.csv' | xargs cat | grep -v 'CGLIB\$STATICHOOK' | grep -v '0.0000' | grep -v 'equals' | grep -v 'invoke' | grep -v 'init' | grep -v 'setCallbacks'| grep -v 'isFrozen' | grep -v 'addAdvisor' | grep -v 'getIndex' | grep -v 'getTargetClass' | sed 's/org.springframework.samples.petclinic.rest.controller.//' | sed 's/,/: /' | sort"
   eval "$find_command >> $results_output_file"
 
-  mv "$OUTPUT_FOLDER" "$OUTPUT_FOLDER-$used_jvm_version-Spring-Boot-$used_spring_boot_version"
+  mv "$OUTPUT_FOLDER" "$OUTPUT_FOLDER-Java-$jvm_version-Spring-Boot-$used_spring_boot_version"
 }
 
 cleanup() {
