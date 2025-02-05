@@ -2,20 +2,22 @@
 
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-APP_HOME="/home/misto/repos/spring-petclinic-rest"
+APP_HOME="$HOME/spring-petclinic-rest"
 
-JMETER_CONFIG="/home/misto/repos/spring-petclinic-energy-benchmarking/jmeter-petclinic-server.jmx"
+JMETER_CONFIG="$HOME/spring-petclinic-energy-benchmarking/jmeter-petclinic-server.jmx"
 
-JOULARJX_CONFIG="/home/misto/repos/spring-petclinic-energy-benchmarking/config.properties"
+JOULARJX_CONFIG="$HOME/spring-petclinic-energy-benchmarking/config.properties"
 
-BENCHMARK_DATA="/home/misto/repos/spring-petclinic-energy-benchmarking/benchmark-ddl-and-data.sql"
+BENCHMARK_DATA="$HOME/spring-petclinic-energy-benchmarking/benchmark-ddl-and-data.sql"
 
 APP_RUN_IDENTIFIER="$(date +%Y-%m-%d_%H-%M-%S)"
-OUTPUT_FOLDER="/home/misto/repos/spring-petclinic-energy-benchmarking/out/$APP_RUN_IDENTIFIER"
+OUTPUT_FOLDER="$HOME/spring-petclinic-energy-benchmarking/out/$APP_RUN_IDENTIFIER"
 
-JAVA_OPTS="-javaagent:/home/misto/repos/joularjx/target/joularjx-3.0.1.jar -Djoularjx.config=$JOULARJX_CONFIG -Dspring.sql.init.mode=never -Dspring.profiles.active=mysql,jpa -Dserver.servlet.context-path=/ -Dspring.datasource.username=root -Dspring.datasource.password=petclinic"
+JAVA_OPTS="-javaagent:$HOME/joularjx/target/joularjx-3.0.1.jar -Djoularjx.config=$JOULARJX_CONFIG -Dspring.sql.init.mode=never -Dspring.profiles.active=mysql,jpa -Dserver.servlet.context-path=/ -Dspring.datasource.username=root -Dspring.datasource.password=petclinic"
 APP_PORT="9966"
 APP_BASE_URL="localhost:$APP_PORT"
+
+virtual_threads="false"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]
@@ -37,6 +39,10 @@ do
     ;;
     --webserver)
     webserver="${2#*=}"
+    shift
+    ;;
+    --virtual-threads)
+    virtual_threads="${2#*=}"
     shift
     ;;
     *)
@@ -196,7 +202,7 @@ start_application() {
   echo "+================================+"
   run_output_file="$OUTPUT_FOLDER/log/$APP_RUN_IDENTIFIER-run.log"
 
-  RUN_CMD="java $JAVA_OPTS -jar $APP_HOME/target/*.jar"
+  RUN_CMD="java $JAVA_OPTS -Dspring.threads.virtual.enabled=$virtual_threads -jar $APP_HOME/target/*.jar"
   
   app_run_command="$RUN_CMD > $run_output_file 2>&1 &"
   echo "$app_run_command"
@@ -329,7 +335,13 @@ extract_run_properties() {
   results_output_file="$OUTPUT_FOLDER/results.txt"
 
   > "$results_output_file"
-  echo "JVM: $jvm_version" >> "$results_output_file"
+  
+  if [ "$virtual_threads" == "true" ]; then
+    echo "JVM: $jvm_version (Virtual Threads)" >> "$results_output_file"
+  else
+    echo "JVM: $jvm_version" >> "$results_output_file"
+  fi
+
   echo "Java: $used_java_version" >> "$results_output_file"
   echo "Spring-Boot: $used_spring_boot_version" >> "$results_output_file"
   echo "Spring: $used_spring_version" >> "$results_output_file"
